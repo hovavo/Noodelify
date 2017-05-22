@@ -1,0 +1,15 @@
+{
+  "name": "noodlify",
+  "version": "1.0.0",
+  "description": "Paper.js based noodlifying",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "hovav@bnop.co",
+  "license": "MIT",
+  "dependencies": {
+    "acorn": "^5.0.3",
+    "paper": "^0.11.3"
+  }
+}
