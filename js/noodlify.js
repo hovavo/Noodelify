@@ -1,9 +1,47 @@
+class NoodlePoint {
+  constructor(offset, distance) {
+    this.offset = offset;
+    this.distance = distance;
+  }
+
+  static fromPoint(point, bounds, isHorizontal = false) {
+    if (!isHorizontal) {
+      return new NoodlePoint(
+        (point.y - bounds.top) / bounds.height,
+        point.x - bounds.left - bounds.width / 2
+      );
+    }
+    else {
+      return new NoodlePoint(
+        (point.x - bounds.left) / bounds.width,
+        point.y - bounds.top - bounds.height / 2
+      );
+    }
+  }
+
+  toPoint(path) {
+    let pathPoint = path.getPointAt(path.length * this.offset);
+    let normal = path.getNormalAt(path.length * this.offset) * this.distance;
+    return pathPoint + normal;
+  }
+
+  static interpolate(point1, point2, offset) {
+    let offsetDiff = point2.offset - point1.offset;
+    let distanceDiff = point2.distance - point1.distance;
+    return new NoodlePoint(
+      point1.offset + offsetDiff * offset,
+      point1.distance + distanceDiff * offset
+    );
+  }
+}
+
 class Noodle extends Group {
   // TODO V2: Off grid points?
   // TODO V2: Stretch
 
-  constructor(source, path, resolution = 5) {
+  constructor(source, path, isHorizontal = false, resolution = 5) {
     super();
+    this.isHorizontal = isHorizontal;
     this.resolution = resolution;
     this.source = source;
     this.path = path;
@@ -17,10 +55,7 @@ class Noodle extends Group {
 
     this._source = source;
     this._sourcePoints = source.segments.map(segment => {
-      return {
-        offset: (segment.point.y - this._source.bounds.top) / this._source.bounds.height,
-        distance: segment.point.x - this._source.bounds.left - this._source.bounds.width / 2
-      }
+      return NoodlePoint.fromPoint(segment.point, this._source.bounds, this.isHorizontal);
     });
 
     this.addChild(source);
@@ -43,18 +78,19 @@ class Noodle extends Group {
     let newPoints = [];
 
     this._sourcePoints.forEach((localPoint, i) => {
-      let newPoint = this._calculatePoint(localPoint);
+      let newPoint = localPoint.toPoint(this._path);
       // Interpoate more points where needed
       let prevPoint = newPoints[newPoints.length - 1];
       if (prevPoint) {
         let prevLocalPoint = this._sourcePoints[i - 1];
         let dist = prevPoint.getDistance(newPoint);
         if (dist > this.resolution) {
-          let numSteps = Math.floor(dist / this.resolution);
+          let numSteps = dist / this.resolution;
           for (let i = 1; i < numSteps; i++) {
             let offset = i / numSteps;
             let newSubPoint =
-              this._calculatePoint(this._interpolatePoints(prevLocalPoint, localPoint, offset));
+              NoodlePoint.interpolate(prevLocalPoint, localPoint, offset).toPoint(this._path);
+
             newPoints.push(newSubPoint);
           }
         }
@@ -76,21 +112,6 @@ class Noodle extends Group {
     this.path = this.path;
     this.path.selected = this.selected;
   }
-
-  _calculatePoint(point) {
-    let pathPoint = this._path.getPointAt(this._path.length * point.offset);
-    let normal = this._path.getNormalAt(this._path.length * point.offset) * point.distance;
-    return pathPoint + normal;
-  }
-
-  _interpolatePoints(point1, point2, offset) {
-    let offsetDiff = point2.offset - point1.offset;
-    let distanceDiff = point2.distance - point1.distance;
-    return {
-      offset: point1.offset + offsetDiff * offset,
-      distance: point1.distance + distanceDiff * offset
-    }
-  }
 }
 
 //////
@@ -105,6 +126,7 @@ var s = new Path(`M26.5,2 2.5,2.4 1.8,26.5 23.8,25.8 23.8,7.8 14.8,7.8 14.8,16.8
 s.strokeColor = 'black';
 
 var noo = new Noodle(s);
+// noo.selected = true;
 
 function onMouseDown(event) {
   noo.path = new Path();
