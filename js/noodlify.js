@@ -35,6 +35,7 @@ class NoodlePoint {
   }
 }
 
+
 class Noodle extends Group {
   // TODO V2: Off grid points?
   // TODO V2: Stretch
@@ -114,18 +115,18 @@ class Noodle extends Group {
   }
 }
 
+
 //////
 
 
 tool.minDistance = 5;
 
-var s = new Path(`M26.5,2 2.5,2.4 1.8,26.5 23.8,25.8 23.8,7.8 14.8,7.8 14.8,16.8 19.8,16.8 18.5,7.2 
-	5.8,7.5 5.8,17.8 10.2,16.8 9.8,6.2 10.2,40.8 3.2,41.5 2.8,74.2 22.8,74.5 22.8,38.8 16.5,39.5 17.8,102.2 5.8,102.7 7.2,45.8 
-	9.8,45.8 11.8,99.8`);
+var noo;
 
-s.strokeColor = 'black';
+project.importSVG('assets/dude.svg', function (group) {
+  noo = new Noodle(group.children.dude);
+});
 
-var noo = new Noodle(s);
 // noo.selected = true;
 
 function onMouseDown(event) {
