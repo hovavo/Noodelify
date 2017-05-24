@@ -25,6 +25,10 @@ class NoodlePoint {
     return pathPoint + normal;
   }
 
+  clone() {
+    return new NoodlePoint(this.offset, this.distance);
+  }
+
   static interpolate(point1, point2, offset) {
     let offsetDiff = point2.offset - point1.offset;
     let distanceDiff = point2.distance - point1.distance;
@@ -37,10 +41,9 @@ class NoodlePoint {
 
 
 class Noodle extends Group {
-  // TODO V2: Off grid points?
   // TODO V2: Stretch
 
-  constructor(source, path, isHorizontal = false, resolution = 5) {
+  constructor(source, path, isHorizontal = false, resolution = 2) {
     super();
     this.isHorizontal = isHorizontal;
     this.resolution = resolution;
@@ -55,9 +58,30 @@ class Noodle extends Group {
     }
 
     this._source = source;
-    this._sourcePoints = source.segments.map(segment => {
-      return NoodlePoint.fromPoint(segment.point, this._source.bounds, this.isHorizontal);
-    });
+
+    // Flat list of child path items
+    this._sourcePaths = [];
+
+    // If source item is a path, add it
+    if (this._source.segments)
+      this._sourcePaths.push(this._source);
+
+    // Add all child paths
+    for (let path of this._source.getItems({class: 'Path'}))
+      this._sourcePaths.push(path);
+
+
+    // Create Noodle points
+    for (let path of this._sourcePaths) {
+      path._sourcePoints = path.segments.map(segment => {
+        return NoodlePoint.fromPoint(segment.point, this._source.bounds, this.isHorizontal);
+      });
+
+      // fix for closed paths
+      if (path.closed)
+        path._sourcePoints.push(path._sourcePoints[0].clone());
+    }
+
 
     this.addChild(source);
   }
@@ -75,33 +99,36 @@ class Noodle extends Group {
     this.addChild(path);
 
 
-    // Create new set of points based on original offsets and distances
-    let newPoints = [];
 
-    this._sourcePoints.forEach((localPoint, i) => {
-      let newPoint = localPoint.toPoint(this._path);
-      // Interpoate more points where needed
-      let prevPoint = newPoints[newPoints.length - 1];
-      if (prevPoint) {
-        let prevLocalPoint = this._sourcePoints[i - 1];
-        let dist = prevPoint.getDistance(newPoint);
-        if (dist > this.resolution) {
-          let numSteps = dist / this.resolution;
-          for (let i = 1; i < numSteps; i++) {
-            let offset = i / numSteps;
-            let newSubPoint =
-              NoodlePoint.interpolate(prevLocalPoint, localPoint, offset).toPoint(this._path);
+    this._sourcePaths.forEach(path => {
+      // Create new set of points based on original offsets and distances
+      let newPoints = [];
+      path._sourcePoints.forEach((noodlePoint, i) => {
+        let newPoint = noodlePoint.toPoint(this._path);
+        // Interpolate more points where needed
+        let prevPoint = newPoints[newPoints.length - 1];
+        if (prevPoint) {
+          let prevLocalPoint = path._sourcePoints[i - 1];
+          let dist = prevPoint.getDistance(newPoint);
+          if (dist > this.resolution) {
+            let numSteps = dist / this.resolution;
+            for (let i = 1; i < numSteps; i++) {
+              let offset = i / numSteps;
+              let newSubPoint =
+                NoodlePoint.interpolate(prevLocalPoint, noodlePoint, offset).toPoint(this._path);
 
-            newPoints.push(newSubPoint);
+              newPoints.push(newSubPoint);
+            }
           }
         }
-      }
-      newPoints.push(newPoint);
+        newPoints.push(newPoint);
+      });
+
+      // Override source segments
+      path.segments = newPoints;
     });
 
 
-    // Override source segments
-    this._source.segments = newPoints;
 
   }
 
@@ -123,11 +150,11 @@ tool.minDistance = 5;
 
 var noo;
 
-project.importSVG('assets/dude.svg', function (group) {
-  noo = new Noodle(group.children.dude);
-});
+project.importSVG('assets/dude2.svg', {expandShapes: true, onLoad:function (group) {
+  noo = new Noodle(group, new Path.Rectangle(view.center, 100));
+  // noo.selected = true;
+}});
 
-// noo.selected = true;
 
 function onMouseDown(event) {
   noo.path = new Path();
@@ -136,5 +163,6 @@ function onMouseDown(event) {
 
 function onMouseDrag(event) {
   noo.path.add(event.point);
+  noo.path.smooth();
   noo.update();
 }
