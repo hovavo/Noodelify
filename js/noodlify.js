@@ -29,6 +29,10 @@ class NoodlePoint {
     return new NoodlePoint(this.offset, this.distance);
   }
 
+  getDistance(otherNoodlePoint) {
+    return Math.abs(this.offset - otherNoodlePoint.offset);
+  }
+
   static interpolate(point1, point2, offset) {
     let offsetDiff = point2.offset - point1.offset;
     let distanceDiff = point2.distance - point1.distance;
@@ -43,7 +47,7 @@ class NoodlePoint {
 class Noodle extends Group {
   // TODO V2: Stretch
 
-  constructor(source, path, isHorizontal = false, resolution = 2) {
+  constructor(source, path, isHorizontal = false, resolution = 5) {
     super();
     this.isHorizontal = isHorizontal;
     this.resolution = resolution;
@@ -99,33 +103,33 @@ class Noodle extends Group {
     this.addChild(path);
 
 
-
     this._sourcePaths.forEach(path => {
       // Create new set of points based on original offsets and distances
-      let newPoints = [];
+      let outputPoints = [];
       path._sourcePoints.forEach((noodlePoint, i) => {
         let newPoint = noodlePoint.toPoint(this._path);
         // Interpolate more points where needed
-        let prevPoint = newPoints[newPoints.length - 1];
+        let prevPoint = outputPoints[outputPoints.length - 1];
         if (prevPoint) {
-          let prevLocalPoint = path._sourcePoints[i - 1];
-          let dist = prevPoint.getDistance(newPoint);
+          let prevNoodlePoint = path._sourcePoints[i - 1];
+          let dist = noodlePoint.getDistance(prevNoodlePoint) * this._path.length;
           if (dist > this.resolution) {
             let numSteps = dist / this.resolution;
             for (let i = 1; i < numSteps; i++) {
               let offset = i / numSteps;
               let newSubPoint =
-                NoodlePoint.interpolate(prevLocalPoint, noodlePoint, offset).toPoint(this._path);
+                NoodlePoint.interpolate(prevNoodlePoint, noodlePoint, offset)
+                  .toPoint(this._path);
 
-              newPoints.push(newSubPoint);
+              outputPoints.push(newSubPoint);
             }
           }
         }
-        newPoints.push(newPoint);
+        outputPoints.push(newPoint);
       });
 
       // Override source segments
-      path.segments = newPoints;
+      path.segments = outputPoints;
     });
 
 
@@ -151,13 +155,14 @@ tool.minDistance = 5;
 var noo;
 
 project.importSVG('assets/dude2.svg', {expandShapes: true, onLoad:function (group) {
-  noo = new Noodle(group, new Path.Rectangle(view.center, 100));
+  noo = new Noodle(group, new Path.Circle(view.center, 100));
   // noo.selected = true;
 }});
 
 
 function onMouseDown(event) {
   noo.path = new Path();
+  noo.path.add(event.point);
   noo.update();
 }
 
