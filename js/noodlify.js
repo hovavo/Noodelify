@@ -78,6 +78,19 @@ class Noodle extends Group {
 
     // Create Noodle points
     for (let path of this._sourcePaths) {
+
+      // subdivide curves:
+      for (let i = path.curves.length - 1; i >= 0; i--){
+        let curve = path.curves[i];
+        if (!curve.isStraight()) {
+          let n = Math.floor(curve.length);
+          for (let i = n; i > 0; i--) {
+            curve.divideAt(i);
+          }
+        }
+      }
+
+      // map to noodle points
       path._sourcePoints = path.segments.map(segment => {
         return NoodlePoint.fromPoint(segment.point, this._source.bounds, this.isHorizontal);
       });
@@ -158,7 +171,6 @@ var hint;
 
 project.importSVG('assets/dude2.svg', {expandShapes: true, onLoad:function (group) {
   noo = new Noodle(group);
-  // noo.selected = true;
 }});
 
 
