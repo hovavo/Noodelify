@@ -62,7 +62,10 @@ class Noodle extends Group {
     }
 
     this._source = source;
-    this._source.clipped = false;
+    if (this._source.clipped) {
+      this._source._clipItem.remove();
+      this._source.clipped = false;
+    }
 
     // Flat list of child path items
     this._sourcePaths = [];
@@ -164,13 +167,12 @@ class Noodle extends Group {
 //////
 
 
-tool.minDistance = 5;
-
 var noo;
 var hint;
 
-project.importSVG('assets/dude2.svg', {expandShapes: true, onLoad:function (group) {
+project.importSVG('assets/dude3.svg', {expandShapes: true, onLoad:function (group) {
   noo = new Noodle(group);
+  // noo.selected = true;
 }});
 
 

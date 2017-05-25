@@ -17,7 +17,7 @@
 	<polyline id="XMLID_6_" class="st2" points="0,64 7,64 7,32 	"/>
 	<line id="XMLID_7_" class="st2" x1="3" y1="0" x2="3" y2="4"/>
 	<line id="XMLID_9_" class="st2" x1="7" y1="0" x2="7" y2="4"/>
-	<circle class="st3" cx="20.9" cy="22.2" r="3.3"/>
-	<circle class="st3" cx="6.7" cy="22.2" r="3.3"/>
+	<circle class="st3" cx="5.4" cy="22.2" r="2"/>
+	<circle class="st3" cx="20.9" cy="22.2" r="2"/>
 </g>
 </svg>
