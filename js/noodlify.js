@@ -168,42 +168,94 @@ class Noodle extends Group {
 
 
 var noo;
-var hint;
 
 project.importSVG('assets/dude3.svg', {expandShapes: true, onLoad:function (group) {
-  noo = new Noodle(group);
-  // noo.selected = true;
+  noo = new Noodle(group, new Path());
+  noo.position = view.center;
+  // noo.path.selected = true;
 }});
 
 
-function onMouseDown(event) {
-  if (!noo.path) {
-    noo.path = new Path();
-    hint = new Path();
-    hint.strokeColor = 'blue';
+var target = view.center;
+var speed = 4;
+var torque = 4;
+var maxLength = 40;
+
+var head = view.center;
+var velocity = new Point();
+
+function onFrame(event) {
+  if(!noo) return;
+  var delta = target - head;
+  if (delta.length > speed) {
+    velocity.length = speed;
+    var a = delta.getDirectedAngle(velocity);
+    if (a < 0 - torque) {
+      velocity.angle += torque;
+    }
+    else if (a > 0 + torque) {
+      velocity.angle -= torque;
+    }
+    else {
+      velocity.angle = delta.angle;
+    }
+
+    head += velocity.rotate(Math.sin(event.count * 0.1) * 5);
+
+    noo.path.insert(0, head);
+
+    if (noo.path.segments.length > maxLength) {
+      noo.path.removeSegments(maxLength + 1)
+    }
   }
-  noo.path.add(event.point);
+  else {
+    target = Point.random() * view.size;
+  }
   noo.update();
+
+}
+
+function onMouseDown(event) {
+  target = event.point;
 }
 
 function onMouseDrag(event) {
-  let vector = event.point - noo.path.lastSegment.point;
-  noo.path.lastSegment.handleOut = vector;
-  noo.path.lastSegment.handleIn = vector.rotate(180);
-
-  hint.segments = [
-    noo.path.lastSegment.point + vector,
-    noo.path.lastSegment.point + vector.rotate(180)
-  ];
-
-  noo.update();
+  target = event.point;
 }
 
-function onMouseMove(event) {
-  if (hint) {
-    hint.segments = [
-      noo.path.lastSegment,
-      event.point
-    ];
-  }
-}
+
+
+
+// var hint;
+
+// function onMouseDown(event) {
+//   if (!noo.path) {
+//     noo.path = new Path();
+//     hint = new Path();
+//     hint.strokeColor = 'blue';
+//   }
+//   noo.path.add(event.point);
+//   noo.update();
+// }
+//
+// function onMouseDrag(event) {
+//   let vector = event.point - noo.path.lastSegment.point;
+//   noo.path.lastSegment.handleOut = vector;
+//   noo.path.lastSegment.handleIn = vector.rotate(180);
+//
+//   hint.segments = [
+//     noo.path.lastSegment.point + vector,
+//     noo.path.lastSegment.point + vector.rotate(180)
+//   ];
+//
+//   noo.update();
+// }
+//
+// function onMouseMove(event) {
+//   if (hint) {
+//     hint.segments = [
+//       noo.path.lastSegment,
+//       event.point
+//     ];
+//   }
+// }
