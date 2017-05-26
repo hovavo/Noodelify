@@ -16,7 +16,7 @@ function onMouseDown(event) {
 }
 
 function onMouseDrag(event) {
-  let vector = event.point - noo.path.lastSegment.point;
+  var vector = event.point - noo.path.lastSegment.point;
   noo.path.lastSegment.handleOut = vector;
   noo.path.lastSegment.handleIn = vector.rotate(180);
 
