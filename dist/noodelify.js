@@ -131,8 +131,8 @@ class Noodle extends Group {
 paper.Noodle = Noodle;
 class NoodlePoint {
   constructor(offset, distance) {
-    this.offset = offset;
-    this.distance = distance;
+    this.location = offset;
+    this.offset = distance;
   }
 
   static fromPoint(point, bounds, isHorizontal = false) {
@@ -151,25 +151,25 @@ class NoodlePoint {
   }
 
   toPoint(path) {
-    let pathPoint = path.getPointAt(path.length * this.offset);
-    let normal = path.getNormalAt(path.length * this.offset) * this.distance;
+    let pathPoint = path.getPointAt(path.length * this.location);
+    let normal = path.getNormalAt(path.length * this.location) * this.offset;
     return pathPoint + normal;
   }
 
   clone() {
-    return new NoodlePoint(this.offset, this.distance);
+    return new NoodlePoint(this.location, this.offset);
   }
 
   getDistance(otherNoodlePoint) {
-    return Math.abs(this.offset - otherNoodlePoint.offset);
+    return Math.abs(this.location - otherNoodlePoint.location);
   }
 
   static interpolate(point1, point2, offset) {
-    let offsetDiff = point2.offset - point1.offset;
-    let distanceDiff = point2.distance - point1.distance;
+    let offsetDiff = point2.location - point1.location;
+    let distanceDiff = point2.offset - point1.offset;
     return new NoodlePoint(
-      point1.offset + offsetDiff * offset,
-      point1.distance + distanceDiff * offset
+      point1.location + offsetDiff * offset,
+      point1.offset + distanceDiff * offset
     );
   }
 }
