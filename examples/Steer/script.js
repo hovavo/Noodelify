@@ -1,6 +1,6 @@
 var target = view.center;
 var speed = 4;
-var torque = 4;
+var torque = 10;
 var maxLength = 40;
 var head = view.center;
 var velocity = new Point();
@@ -38,7 +38,7 @@ function onFrame(event) {
     }
   }
   else {
-    target = Point.random() * view.size;
+    target = Point.random() * (view.size * 0.25) + (view.size * 0.375);
   }
   noo.update();
 }
