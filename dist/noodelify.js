@@ -48,13 +48,13 @@ class Noodle extends Group {
       }
 
       // map to noodle points
-      path._sourcePoints = path.segments.map(segment => {
+      path._noodlePoints = path.segments.map(segment => {
         return NoodlePoint.fromPoint(segment.point, this._source.bounds, this.isHorizontal);
       });
 
       // fix for closed paths
       if (path.closed)
-        path._sourcePoints.push(path._sourcePoints[0].clone());
+        path._noodlePoints.push(path._noodlePoints[0].clone());
     }
 
     this.addChild(source);
@@ -79,12 +79,12 @@ class Noodle extends Group {
     this._sourcePaths.forEach(path => {
       // Create new set of points based on original offsets and distances
       let outputPoints = [];
-      path._sourcePoints.forEach((noodlePoint, i) => {
+      path._noodlePoints.forEach((noodlePoint, i) => {
         let newPoint = noodlePoint.toPoint(this._path);
         // Interpolate more points where needed
         let prevPoint = outputPoints[outputPoints.length - 1];
         if (prevPoint) {
-          let prevNoodlePoint = path._sourcePoints[i - 1];
+          let prevNoodlePoint = path._noodlePoints[i - 1];
           let dist = noodlePoint.getDistance(prevNoodlePoint) * this._path.length;
           if (dist > this.resolution) {
             let numSteps = dist / this.resolution;
