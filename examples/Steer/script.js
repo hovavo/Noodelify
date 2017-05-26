@@ -1,52 +1,59 @@
-var target = view.center;
-var speed = 4;
-var torque = 10;
-var maxLength = 40;
-var head = view.center;
-var velocity = new Point();
-var noo = new Noodle();
+var amount = 3;
+var dudes = [];
 
-view.pause();
+for (var i = 0; i < amount; i++) {
+  var dude = new Noodle();
+  dude.loadSVG('../assets/dude4.svg', function(noodle) {
+    noodle.position = getRandomTarget();
+    noodle.path = new Path();
+    noodle.target = view.center;
+    noodle.speed = 4;
+    noodle.torque = 10;
+    noodle.maxLength = 40;
+    noodle.head = getRandomTarget();
+    noodle.velocity = new Point();
+    dudes.push(noodle);
+  });
+}
 
-noo.loadSVG('../assets/dude4.svg', function() {
-  noo.position = view.center;
-  noo.path = new Path();
-  view.play();
-})
 
 function onFrame(event) {
-  var delta = target - head;
-  if (delta.length > speed) {
-    velocity.length = speed;
-    var a = delta.getDirectedAngle(velocity);
-    if (a < 0 - torque) {
-      velocity.angle += torque;
-    }
-    else if (a > 0 + torque) {
-      velocity.angle -= torque;
+  dudes.forEach(function (noodle) {
+    noodle.delta = noodle.target - noodle.head;
+    if (noodle.delta.length > noodle.speed) {
+      noodle.velocity.length = noodle.speed;
+      var a = noodle.delta.getDirectedAngle(noodle.velocity);
+      if (a < 0 - noodle.torque) {
+        noodle.velocity.angle += noodle.torque;
+      }
+      else if (a > 0 + noodle.torque) {
+        noodle.velocity.angle -= noodle.torque;
+      }
+      else {
+        noodle.velocity.angle = noodle.delta.angle;
+      }
+
+      noodle.head += noodle.velocity.rotate(Math.sin(event.count * 0.1) * 5);
+
+      noodle.path.insert(0, noodle.head);
+
+      if (noodle.path.segments.length > noodle.maxLength) {
+        noodle.path.removeSegments(noodle.maxLength + 1)
+      }
     }
     else {
-      velocity.angle = delta.angle;
+      noodle.target = getRandomTarget();
     }
-
-    head += velocity.rotate(Math.sin(event.count * 0.1) * 5);
-
-    noo.path.insert(0, head);
-
-    if (noo.path.segments.length > maxLength) {
-      noo.path.removeSegments(maxLength + 1)
-    }
-  }
-  else {
-    target = Point.random() * (view.size * 0.25) + (view.size * 0.375);
-  }
-  noo.update();
+    noodle.update();
+  });
 }
 
 function onMouseDown(event) {
-  target = event.point;
+  dudes.forEach(function (noodle) {
+    noodle.target = getRandomTarget();
+  });
 }
 
-function onMouseDrag(event) {
-  target = event.point;
+function getRandomTarget() {
+  return Point.random() * (view.size * 0.4) + (view.size * 0.3);
 }
