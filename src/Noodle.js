@@ -1,7 +1,7 @@
 class Noodle extends Group {
   // TODO V2: Stretch
 
-  constructor(source, path, isHorizontal = false, resolution = 5) {
+  constructor(source = new Group(), path, isHorizontal = false, resolution = 5) {
     super();
     this.isHorizontal = isHorizontal;
     this.resolution = resolution;
@@ -57,8 +57,10 @@ class Noodle extends Group {
         path._sourcePoints.push(path._sourcePoints[0].clone());
     }
 
-
     this.addChild(source);
+    this.path = this.isHorizontal ?
+      new Path([this._source.bounds.leftCenter, this._source.bounds.rightCenter]) :
+      new Path([this._source.bounds.topCenter, this._source.bounds.bottomCenter]);
   }
 
   get source() {
@@ -111,6 +113,18 @@ class Noodle extends Group {
   update() {
     this.path = this.path;
     this.path.selected = this.selected;
+  }
+
+  loadSVG(url, onLoad) {
+    let _this = this;
+    project.importSVG(url, {
+      expandShapes: true,
+      onLoad: function (group) {
+        _this.source = group;
+        if (onLoad)
+          onLoad(_this);
+      }
+    });
   }
 }
 

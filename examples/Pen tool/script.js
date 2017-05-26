@@ -1,18 +1,12 @@
-var noo;
-
-project.importSVG('../assets/dude3.svg', {
-  expandShapes: true, onLoad: function (group) {
-    noo = new Noodle(group);
-    noo.position = view.center;
-    // noo.path.selected = true;
-  }
-});
-
-
 var hint;
+var noo = new Noodle();
+
+noo.loadSVG('../assets/dude3.svg', function() {
+  noo.position = view.center;
+})
 
 function onMouseDown(event) {
-  if (!noo.path) {
+  if (!hint) {
     noo.path = new Path();
     hint = new Path();
     hint.strokeColor = 'blue';

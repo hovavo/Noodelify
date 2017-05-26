@@ -1,24 +1,20 @@
-var noo;
-
-project.importSVG('../assets/dude4.svg', {
-  expandShapes: true, onLoad: function (group) {
-    noo = new Noodle(group, new Path());
-    noo.position = view.center;
-    // noo.path.selected = true;
-  }
-});
-
-
 var target = view.center;
 var speed = 4;
 var torque = 4;
 var maxLength = 40;
-
 var head = view.center;
 var velocity = new Point();
+var noo = new Noodle();
+
+view.pause();
+
+noo.loadSVG('../assets/dude4.svg', function() {
+  noo.position = view.center;
+  noo.path = new Path();
+  view.play();
+})
 
 function onFrame(event) {
-  if (!noo) return;
   var delta = target - head;
   if (delta.length > speed) {
     velocity.length = speed;
@@ -45,7 +41,6 @@ function onFrame(event) {
     target = Point.random() * view.size;
   }
   noo.update();
-
 }
 
 function onMouseDown(event) {
