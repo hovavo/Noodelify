@@ -6,6 +6,7 @@ class Noodle extends Group {
 
   constructor(source = new Group(), path, isHorizontal = false, resolution = 5) {
     super();
+
     this.isHorizontal = isHorizontal;
     this.resolution = resolution;
     this.source = source;
@@ -13,6 +14,7 @@ class Noodle extends Group {
   }
 
   set source(source) {
+
     if (this._source) {
       this._source.remove();
       delete this._source;
@@ -28,42 +30,30 @@ class Noodle extends Group {
     this._sourcePaths = [];
 
     // If source item is a path, add it
-    if (this._source.segments)
+    if (this._source.segments) {
+      Noodle.prepareCurves(this._source);
       this._sourcePaths.push(this._source);
-
-    // Add all child paths
-    for (let path of this._source.getItems({class: 'Path'}))
-      this._sourcePaths.push(path);
-
-
-    // Create Noodle points
-    for (let path of this._sourcePaths) {
-
-      // subdivide curves:
-      for (let i = path.curves.length - 1; i >= 0; i--) {
-        let curve = path.curves[i];
-        if (!curve.isStraight()) {
-          let n = Math.floor(curve.length);
-          for (let i = n; i > 0; i--) {
-            curve.divideAt(i);
-          }
-        }
-      }
-
-      // map to noodle points
-      path._noodlePoints = path.segments.map(segment => {
-        return NoodlePoint.fromPoint(segment.point, this._source.bounds, this.isHorizontal);
-      });
-
-      // fix for closed paths
-      if (path.closed)
-        path._noodlePoints.push(path._noodlePoints[0].clone());
     }
 
-    this.addChild(source);
+    // Add all child paths
+    for (let path of this._source.getItems({class: 'Path'})) {
+      Noodle.prepareCurves(path);
+      this._sourcePaths.push(path);
+    }
+
+    // Default path
     this.path = this.isHorizontal ?
       new Path([this._source.bounds.leftCenter, this._source.bounds.rightCenter]) :
       new Path([this._source.bounds.topCenter, this._source.bounds.bottomCenter]);
+
+    // Default stretch
+    this._stretchStart = 0;
+    this._stretchEnd = 0;
+
+    // Create Noodle points
+    this.processSourcePoints();
+
+    this.addChild(source);
   }
 
   get source() {
@@ -78,24 +68,27 @@ class Noodle extends Group {
     this._path = path;
     this.addChild(path);
 
+    if (!this._sourcePaths) return;
 
     this._sourcePaths.forEach(path => {
       // Create new set of points based on original offsets and distances
       let outputPoints = [];
+      if (!path._noodlePoints) return;
+
       path._noodlePoints.forEach((noodlePoint, i) => {
-        let newPoint = noodlePoint.toPoint(this._path);
+        let newPoint = noodlePoint.toPoint(this);
         // Interpolate more points where needed
         let prevPoint = outputPoints[outputPoints.length - 1];
         if (prevPoint) {
           let prevNoodlePoint = path._noodlePoints[i - 1];
-          let dist = noodlePoint.getDistance(prevNoodlePoint) * this._path.length;
+          let dist = noodlePoint.getDistance(prevNoodlePoint, this);
           if (dist > this.resolution) {
             let numSteps = dist / this.resolution;
             for (let i = 1; i < numSteps; i++) {
               let offset = i / numSteps;
               let newSubPoint =
-                NoodlePoint.interpolate(prevNoodlePoint, noodlePoint, offset)
-                  .toPoint(this._path);
+                NoodlePoint.interpolate(prevNoodlePoint, noodlePoint, offset, this)
+                  .toPoint(this);
 
               outputPoints.push(newSubPoint);
             }
@@ -113,9 +106,50 @@ class Noodle extends Group {
     return this._path;
   }
 
+  set stretchStart(val) {
+    this._stretchStart = val;
+    if (this.source)
+      this.processSourcePoints();
+  }
+
+  get stretchStart() {
+    return this._stretchStart;
+  }
+
+  set stretchEnd(val) {
+    this._stretchEnd = val;
+    if (this.source)
+      this.processSourcePoints();
+  }
+
+  get stretchEnd() {
+    return this._stretchEnd;
+  }
+
+  get stretchLength() {
+    return this.path._length - this._stretchEnd - this._stretchStart;
+  }
+
+  get shrinked() {
+    return (this.path.length - this.stretchEnd) < this.stretchStart;
+  }
+
   update() {
     this.path = this.path;
     this.path.selected = this.selected;
+  }
+
+  processSourcePoints() {
+    for (let path of this._sourcePaths) {
+      // map to noodle points
+      path._noodlePoints = path.segments.map(segment => {
+        return NoodlePoint.fromPoint(segment.point, this);
+      });
+
+      // fix for closed paths
+      if (path.closed)
+        path._noodlePoints.push(path._noodlePoints[0].clone());
+    }
   }
 
   loadSVG(url, onLoad) {
@@ -128,6 +162,18 @@ class Noodle extends Group {
           onLoad(_this);
       }
     });
+  }
+
+  static prepareCurves(path) {
+    for (let i = path.curves.length - 1; i >= 0; i--) {
+      let curve = path.curves[i];
+      if (!curve.isStraight()) {
+        let n = Math.floor(curve.length);
+        for (let i = n; i > 0; i--) {
+          curve.divideAt(i);
+        }
+      }
+    }
   }
 }
 

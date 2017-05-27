@@ -6,6 +6,7 @@ class Noodle extends Group {
 
   constructor(source = new Group(), path, isHorizontal = false, resolution = 5) {
     super();
+
     this.isHorizontal = isHorizontal;
     this.resolution = resolution;
     this.source = source;
@@ -13,6 +14,7 @@ class Noodle extends Group {
   }
 
   set source(source) {
+
     if (this._source) {
       this._source.remove();
       delete this._source;
@@ -28,42 +30,30 @@ class Noodle extends Group {
     this._sourcePaths = [];
 
     // If source item is a path, add it
-    if (this._source.segments)
+    if (this._source.segments) {
+      Noodle.prepareCurves(this._source);
       this._sourcePaths.push(this._source);
-
-    // Add all child paths
-    for (let path of this._source.getItems({class: 'Path'}))
-      this._sourcePaths.push(path);
-
-
-    // Create Noodle points
-    for (let path of this._sourcePaths) {
-
-      // subdivide curves:
-      for (let i = path.curves.length - 1; i >= 0; i--) {
-        let curve = path.curves[i];
-        if (!curve.isStraight()) {
-          let n = Math.floor(curve.length);
-          for (let i = n; i > 0; i--) {
-            curve.divideAt(i);
-          }
-        }
-      }
-
-      // map to noodle points
-      path._noodlePoints = path.segments.map(segment => {
-        return NoodlePoint.fromPoint(segment.point, this._source.bounds, this.isHorizontal);
-      });
-
-      // fix for closed paths
-      if (path.closed)
-        path._noodlePoints.push(path._noodlePoints[0].clone());
     }
 
-    this.addChild(source);
+    // Add all child paths
+    for (let path of this._source.getItems({class: 'Path'})) {
+      Noodle.prepareCurves(path);
+      this._sourcePaths.push(path);
+    }
+
+    // Default path
     this.path = this.isHorizontal ?
       new Path([this._source.bounds.leftCenter, this._source.bounds.rightCenter]) :
       new Path([this._source.bounds.topCenter, this._source.bounds.bottomCenter]);
+
+    // Default stretch
+    this._stretchStart = 0;
+    this._stretchEnd = 0;
+
+    // Create Noodle points
+    this.processSourcePoints();
+
+    this.addChild(source);
   }
 
   get source() {
@@ -78,24 +68,27 @@ class Noodle extends Group {
     this._path = path;
     this.addChild(path);
 
+    if (!this._sourcePaths) return;
 
     this._sourcePaths.forEach(path => {
       // Create new set of points based on original offsets and distances
       let outputPoints = [];
+      if (!path._noodlePoints) return;
+
       path._noodlePoints.forEach((noodlePoint, i) => {
-        let newPoint = noodlePoint.toPoint(this._path);
+        let newPoint = noodlePoint.toPoint(this);
         // Interpolate more points where needed
         let prevPoint = outputPoints[outputPoints.length - 1];
         if (prevPoint) {
           let prevNoodlePoint = path._noodlePoints[i - 1];
-          let dist = noodlePoint.getDistance(prevNoodlePoint) * this._path.length;
+          let dist = noodlePoint.getDistance(prevNoodlePoint, this);
           if (dist > this.resolution) {
             let numSteps = dist / this.resolution;
             for (let i = 1; i < numSteps; i++) {
               let offset = i / numSteps;
               let newSubPoint =
-                NoodlePoint.interpolate(prevNoodlePoint, noodlePoint, offset)
-                  .toPoint(this._path);
+                NoodlePoint.interpolate(prevNoodlePoint, noodlePoint, offset, this)
+                  .toPoint(this);
 
               outputPoints.push(newSubPoint);
             }
@@ -113,9 +106,50 @@ class Noodle extends Group {
     return this._path;
   }
 
+  set stretchStart(val) {
+    this._stretchStart = val;
+    if (this.source)
+      this.processSourcePoints();
+  }
+
+  get stretchStart() {
+    return this._stretchStart;
+  }
+
+  set stretchEnd(val) {
+    this._stretchEnd = val;
+    if (this.source)
+      this.processSourcePoints();
+  }
+
+  get stretchEnd() {
+    return this._stretchEnd;
+  }
+
+  get stretchLength() {
+    return this.path._length - this._stretchEnd - this._stretchStart;
+  }
+
+  get shrinked() {
+    return (this.path.length - this.stretchEnd) < this.stretchStart;
+  }
+
   update() {
     this.path = this.path;
     this.path.selected = this.selected;
+  }
+
+  processSourcePoints() {
+    for (let path of this._sourcePaths) {
+      // map to noodle points
+      path._noodlePoints = path.segments.map(segment => {
+        return NoodlePoint.fromPoint(segment.point, this);
+      });
+
+      // fix for closed paths
+      if (path.closed)
+        path._noodlePoints.push(path._noodlePoints[0].clone());
+    }
   }
 
   loadSVG(url, onLoad) {
@@ -129,50 +163,134 @@ class Noodle extends Group {
       }
     });
   }
+
+  static prepareCurves(path) {
+    for (let i = path.curves.length - 1; i >= 0; i--) {
+      let curve = path.curves[i];
+      if (!curve.isStraight()) {
+        let n = Math.floor(curve.length);
+        for (let i = n; i > 0; i--) {
+          curve.divideAt(i);
+        }
+      }
+    }
+  }
 }
 
 paper.Noodle = Noodle;
 class NoodlePoint {
-  constructor(offset, distance) {
-    this.location = offset;
-    this.offset = distance;
+
+  constructor(locationNormalized, offset, locationSticky, locationStretch) {
+    this.offset = offset;
+    this.locationNormalized = locationNormalized;
+    this.locationSticky = locationSticky;
+    this.locationStretch = locationStretch;
   }
 
-  static fromPoint(point, bounds, isHorizontal = false) {
-    if (!isHorizontal) {
-      return new NoodlePoint(
-        (point.y - bounds.top) / bounds.height,
-        point.x - bounds.left - bounds.width / 2
-      );
+  static fromPoint(point, noodle) {
+    let location;
+    let boundsThickness;
+    let offset;
+
+    if (!noodle.isHorizontal) {
+      location = point.y - noodle.source.bounds.top;
+      boundsThickness = noodle.source.bounds.width;
+      offset = point.x - noodle.source.bounds.left - boundsThickness / 2;
     }
     else {
-      return new NoodlePoint(
-        (point.x - bounds.left) / bounds.width,
-        point.y - bounds.top - bounds.height / 2
-      );
+      location = point.x - noodle.source.bounds.left;
+      boundsThickness = noodle.source.bounds.height;
+      offset = point.y - noodle.source.bounds.top - boundsThickness / 2
     }
+
+    return NoodlePoint.fromPathLocation(location, offset, noodle);
   }
 
-  toPoint(path) {
-    let pathPoint = path.getPointAt(path.length * this.location);
-    let normal = path.getNormalAt(path.length * this.location) * this.offset;
+  static fromPathLocation(location, offset, noodle) {
+    let locationSticky;
+    let locationStretch;
+
+    if (location < noodle.stretchStart)
+      locationSticky = location;
+
+    else if (location > noodle.path.length - noodle.stretchEnd)
+      locationSticky = location - noodle.path.length;
+
+    else
+      locationStretch = (location - noodle.stretchStart) / noodle.stretchLength;
+
+    // console.log(location / noodle.path.length)
+    return new NoodlePoint(
+      location / noodle.path.length,
+      offset,
+      locationSticky,
+      locationStretch
+    );
+  }
+
+  toPoint(noodle) {
+    let path = noodle.path;
+    let loc = this.toPathLocation(noodle);
+    let pathPoint = path.getPointAt(loc);
+    let normal = path.getNormalAt(loc) * this.offset;
     return pathPoint + normal;
   }
 
+  toPathLocation(noodle) {
+    let path = noodle.path;
+
+    if (noodle.shrinked) {
+      return path.length * this.locationNormalized;
+    }
+
+    if (this.sticky) {
+      if (this.stickyStart) {
+        return this.locationSticky;
+      }
+      else if (this.stickyEnd) {
+        return path.length + this.locationSticky;
+      }
+    }
+
+    return noodle.stretchStart + noodle.stretchLength * this.locationStretch;
+  }
+
   clone() {
-    return new NoodlePoint(this.location, this.offset);
+    return new NoodlePoint(this.locationNormalized, this.offset);
   }
 
-  getDistance(otherNoodlePoint) {
-    return Math.abs(this.location - otherNoodlePoint.location);
+  getDistance(otherNoodlePoint, noodle) {
+    return Math.abs(this.toPathLocation(noodle) - otherNoodlePoint.toPathLocation(noodle));
   }
 
-  static interpolate(point1, point2, offset) {
-    let offsetDiff = point2.location - point1.location;
-    let distanceDiff = point2.offset - point1.offset;
-    return new NoodlePoint(
-      point1.location + offsetDiff * offset,
-      point1.offset + distanceDiff * offset
+  get sticky() {
+    return !isNaN(this.locationSticky);
+  }
+
+  get stickySide() {
+    if (this.sticky) {
+      return (this.locationSticky > 0) ? 1 : 0;
+    }
+    return -1;
+  }
+
+  get stickyStart() {
+    return this.stickySide == 1;
+  }
+
+  get stickyEnd() {
+    return this.stickySide == 0;
+  }
+
+  static interpolate(point1, point2, time, noodle) {
+    let startLocation = point1.toPathLocation(noodle);
+    let endLocation = point2.toPathLocation(noodle);
+    let locationDiff = endLocation - startLocation;
+    let offsetDiff = point2.offset - point1.offset;
+    return NoodlePoint.fromPathLocation(
+      startLocation + locationDiff * time,
+      point1.offset + offsetDiff * time,
+      noodle
     );
   }
 }
