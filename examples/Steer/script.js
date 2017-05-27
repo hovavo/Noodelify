@@ -1,3 +1,5 @@
+// TODO: move to steer class
+
 var amount = 3;
 var dudes = [];
 

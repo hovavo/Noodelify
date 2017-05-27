@@ -1,5 +1,8 @@
 class Noodle extends Group {
-  // TODO V2: Stretch
+  // TODO: Stretch between guides
+  // TODO: Width getter (/setter?)
+  // TODO: More directions?
+
 
   constructor(source = new Group(), path, isHorizontal = false, resolution = 5) {
     super();

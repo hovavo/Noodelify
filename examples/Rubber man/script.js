@@ -3,6 +3,7 @@ view.pause();
 var noo = new Noodle();
 var middleSegment;
 
+// TODO: Move to class
 var animation = {
   duration: 50,
   progress: 0,
