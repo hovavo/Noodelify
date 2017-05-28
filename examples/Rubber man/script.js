@@ -23,7 +23,7 @@ var animation = {
 }
 
 noo.loadSVG('../assets/dude3.svg', function () {
-  noo.stretchStart = 70;
+  noo.stretchStart = 15;
   noo.stretchEnd = 30;
   noo.position = view.center;
   middleSegment = noo.path.divideAt(noo.path.length / 2);

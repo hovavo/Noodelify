@@ -2,8 +2,9 @@ var hint;
 var noo = new Noodle();
 
 noo.loadSVG('../assets/dude3.svg', function() {
-  noo.stretchStart = 50;
   noo.position = view.center;
+  noo.stretchStart = 70;
+  noo.stretchEnd = 30;
 })
 
 function onMouseDown(event) {

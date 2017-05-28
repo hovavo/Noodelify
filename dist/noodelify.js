@@ -181,11 +181,12 @@ class Noodle extends Group {
 paper.Noodle = Noodle;
 class NoodlePoint {
 
-  constructor(locationNormalized, offset, locationSticky, locationStretch) {
+  constructor(locationNormalized, offset, locationSticky, locationStretch, stickySide) {
     this.offset = offset;
     this.locationNormalized = locationNormalized;
     this.locationSticky = locationSticky;
     this.locationStretch = locationStretch;
+    this.stickySide = stickySide;
   }
 
   static fromPoint(point, noodle) {
@@ -209,13 +210,18 @@ class NoodlePoint {
 
   static fromPathLocation(location, offset, noodle) {
     let locationSticky;
+    let stickySide;
     let locationStretch;
 
-    if (location < noodle.stretchStart)
+    if (location < noodle.stretchStart) {
       locationSticky = location;
+      stickySide = 1;
+    }
 
-    else if (location > noodle.path.length - noodle.stretchEnd)
-      locationSticky = location - noodle.path.length;
+    else if (location > noodle.path.length - noodle.stretchEnd) {
+      locationSticky = noodle.path.length - location;
+      stickySide = -1;
+    }
 
     locationStretch = (location - noodle.stretchStart) / noodle.stretchLength;
 
@@ -223,7 +229,8 @@ class NoodlePoint {
       location / noodle.path.length,
       offset,
       locationSticky,
-      locationStretch
+      locationStretch,
+      stickySide
     );
   }
 
@@ -247,7 +254,7 @@ class NoodlePoint {
         return this.locationSticky;
       }
       else if (this.stickyEnd) {
-        return path.length + this.locationSticky;
+        return path.length - this.locationSticky;
       }
     }
     return noodle.stretchStart + noodle.stretchLength * this.locationStretch;
@@ -258,7 +265,8 @@ class NoodlePoint {
       this.locationNormalized,
       this.offset,
       this.locationSticky,
-      this.locationStretch
+      this.locationStretch,
+      this.stickySide
     );
   }
 
@@ -270,19 +278,12 @@ class NoodlePoint {
     return !isNaN(this.locationSticky);
   }
 
-  get stickySide() {
-    if (this.sticky) {
-      return (this.locationSticky > 0) ? 1 : 0;
-    }
-    return -1;
-  }
-
   get stickyStart() {
     return this.stickySide == 1;
   }
 
   get stickyEnd() {
-    return this.stickySide == 0;
+    return this.stickySide == -1;
   }
 
   static interpolate(point1, point2, time, noodle) {
