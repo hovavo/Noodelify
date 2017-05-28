@@ -72,8 +72,9 @@ class Noodle extends Group {
 
     this._sourcePaths.forEach(path => {
       // Create new set of points based on original offsets and distances
-      let outputPoints = [];
       if (!path._noodlePoints) return;
+
+      let outputPoints = [];
 
       path._noodlePoints.forEach((noodlePoint, i) => {
         let newPoint = noodlePoint.toPoint(this);
@@ -127,7 +128,7 @@ class Noodle extends Group {
   }
 
   get stretchLength() {
-    return this.path._length - this._stretchEnd - this._stretchStart;
+    return this.path.length - this.stretchEnd - this.stretchStart;
   }
 
   get shrinked() {
