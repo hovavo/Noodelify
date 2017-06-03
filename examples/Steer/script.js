@@ -1,21 +1,24 @@
 // TODO: move to steer class
 
-var amount = 3;
 var dudes = [];
 
-for (var i = 0; i < amount; i++) {
+for (var i = 0; i < 3; i++) {
   var dude = new Noodle();
   dude.loadSVG('../assets/dude4.svg', function(noodle) {
-    noodle.position = getRandomTarget();
-    noodle.path = new Path();
-    noodle.target = view.center;
-    noodle.speed = 4;
-    noodle.torque = 10;
-    noodle.maxLength = 40;
-    noodle.head = getRandomTarget();
-    noodle.velocity = new Point();
-    dudes.push(noodle);
+    register(noodle);
   });
+}
+
+function register(noodle) {
+  noodle.path = new Path();
+  noodle.position = getRandomTarget();
+  noodle.target = view.center;
+  noodle.speed = 4;
+  noodle.torque = 10;
+  noodle.maxLength = 40;
+  noodle.head = getRandomTarget();
+  noodle.velocity = new Point();
+  dudes.push(noodle);
 }
 
 

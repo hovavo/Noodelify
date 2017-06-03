@@ -38,3 +38,9 @@ function onMouseMove(event) {
     ];
   }
 }
+
+function onKeyUp(event) {
+  if (event.key == 's') {
+    noo.selected = !noo.selected;
+  }
+}

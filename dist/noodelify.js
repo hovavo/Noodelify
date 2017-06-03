@@ -87,14 +87,13 @@ class Noodle extends Group {
             let numSteps = dist / this.resolution;
             for (let i = 1; i < numSteps; i++) {
               let offset = i / numSteps;
-              let newSubPoint =
-                NoodlePoint.interpolate(prevNoodlePoint, noodlePoint, offset, this)
-                  .toPoint(this);
-
+              let newSubNoodlePoint = NoodlePoint.interpolate(prevNoodlePoint, noodlePoint, offset, this)
+              let newSubPoint = newSubNoodlePoint.toPoint(this);
               outputPoints.push(newSubPoint);
             }
           }
         }
+
         outputPoints.push(newPoint);
       });
 
