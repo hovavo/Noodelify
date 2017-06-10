@@ -9,15 +9,15 @@
 	.st3{fill:#CE6E6E;}
 </style>
 <g>
-	<polygon id="XMLID_1_" class="st0" points="-396.9,325.8 -424.4,325.8 -424.4,219.6 -396.9,219.6 	"/>
-	<polyline id="XMLID_921_" class="st1" points="-411.9,238.4 -409.4,238.4 -409.4,232.7 -406.6,232.7 	"/>
-	<line id="XMLID_4_" class="st1" x1="-415.2" y1="232.7" x2="-412.9" y2="232.7"/>
-	<line id="XMLID_8_" class="st2" x1="-410.5" y1="325.6" x2="-410.5" y2="302.6"/>
-	<polyline id="XMLID_3_" class="st2" points="-396.9,283.6 -404,283.6 -404,254.3 	"/>
-	<polyline id="XMLID_6_" class="st2" points="-424.4,283.6 -417.4,283.6 -417.4,254.3 	"/>
-	<line id="XMLID_7_" class="st2" x1="-420.4" y1="219.6" x2="-420.4" y2="223.6"/>
-	<line id="XMLID_9_" class="st2" x1="-416.4" y1="219.6" x2="-416.4" y2="223.6"/>
-	<circle class="st3" cx="-419" cy="241.8" r="2"/>
-	<circle class="st3" cx="-403.5" cy="241.8" r="2"/>
+	<polygon id="XMLID_1_" class="st0" points="-398.9,325.9 -426.4,325.9 -426.4,219.7 -398.9,219.7 	"/>
+	<polyline id="XMLID_921_" class="st1" points="-413.9,238.5 -411.4,238.5 -411.4,232.8 -408.6,232.8 	"/>
+	<line id="XMLID_4_" class="st1" x1="-417.2" y1="232.8" x2="-414.9" y2="232.8"/>
+	<line id="XMLID_8_" class="st2" x1="-412.5" y1="325.7" x2="-412.5" y2="302.7"/>
+	<polyline id="XMLID_3_" class="st2" points="-398.9,283.7 -406,283.7 -406,254.4 	"/>
+	<polyline id="XMLID_6_" class="st2" points="-426.4,283.7 -419.4,283.7 -419.4,254.4 	"/>
+	<line id="XMLID_7_" class="st2" x1="-422.4" y1="219.7" x2="-422.4" y2="223.7"/>
+	<line id="XMLID_9_" class="st2" x1="-418.4" y1="219.7" x2="-418.4" y2="223.7"/>
+	<circle class="st3" cx="-421" cy="241.9" r="2"/>
+	<circle class="st3" cx="-405.5" cy="241.9" r="2"/>
 </g>
 </svg>

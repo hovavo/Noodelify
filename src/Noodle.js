@@ -1,5 +1,4 @@
 class Noodle extends Group {
-  // TODO: Stretch between guides
   // TODO: Width getter (/setter?)
   // TODO: More directions?
 
@@ -31,13 +30,13 @@ class Noodle extends Group {
 
     // If source item is a path, add it
     if (this._source.segments) {
-      Noodle.prepareCurves(this._source);
+      this._source.flatten();
       this._sourcePaths.push(this._source);
     }
 
     // Add all child paths
     for (let path of this._source.getItems({class: 'Path'})) {
-      Noodle.prepareCurves(path);
+      path.flatten();
       this._sourcePaths.push(path);
     }
 
@@ -74,13 +73,12 @@ class Noodle extends Group {
       // Create new set of points based on original offsets and distances
       if (!path._noodlePoints) return;
 
-      let outputPoints = [];
+      path.removeSegments();
 
       path._noodlePoints.forEach((noodlePoint, i) => {
         let newPoint = noodlePoint.toPoint(this);
         // Interpolate more points where needed
-        let prevPoint = outputPoints[outputPoints.length - 1];
-        if (prevPoint) {
+        if (path.lastSegment) {
           let prevNoodlePoint = path._noodlePoints[i - 1];
           let dist = noodlePoint.getDistance(prevNoodlePoint, this);
           if (dist > this.resolution) {
@@ -89,16 +87,13 @@ class Noodle extends Group {
               let offset = i / numSteps;
               let newSubNoodlePoint = NoodlePoint.interpolate(prevNoodlePoint, noodlePoint, offset, this)
               let newSubPoint = newSubNoodlePoint.toPoint(this);
-              outputPoints.push(newSubPoint);
+              path.add(newSubPoint);
             }
           }
         }
 
-        outputPoints.push(newPoint);
+        path.add(newPoint);
       });
-
-      // Override source segments
-      path.segments = outputPoints;
     });
   }
 
@@ -162,18 +157,6 @@ class Noodle extends Group {
           onLoad(_this);
       }
     });
-  }
-
-  static prepareCurves(path) {
-    for (let i = path.curves.length - 1; i >= 0; i--) {
-      let curve = path.curves[i];
-      if (!curve.isStraight()) {
-        let n = Math.floor(curve.length);
-        for (let i = n; i > 0; i--) {
-          curve.divideAt(i);
-        }
-      }
-    }
   }
 }
 
