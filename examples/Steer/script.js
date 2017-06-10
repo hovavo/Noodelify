@@ -40,10 +40,10 @@ function onFrame(event) {
 
       noodle.head += noodle.velocity.rotate(Math.sin(event.count * 0.1) * 5);
 
-      noodle.path.insert(0, noodle.head);
+      noodle.path.add(noodle.head);
 
       if (noodle.path.segments.length > noodle.maxLength) {
-        noodle.path.removeSegments(noodle.maxLength + 1)
+        noodle.path.removeSegments(0, 1);
       }
     }
     else {
