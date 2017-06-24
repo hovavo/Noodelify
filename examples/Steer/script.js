@@ -15,7 +15,7 @@ function register(noodle) {
   noodle.target = view.center;
   noodle.speed = 4;
   noodle.torque = 10;
-  noodle.maxLength = 40;
+  noodle.maxLength = 60;
   noodle.head = getRandomTarget();
   noodle.velocity = new Point();
   dudes.push(noodle);
