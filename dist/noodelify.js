@@ -1,5 +1,4 @@
 class Noodle extends Group {
-  // TODO: Stretch between guides
   // TODO: Width getter (/setter?)
   // TODO: More directions?
 
@@ -14,7 +13,6 @@ class Noodle extends Group {
   }
 
   set source(source) {
-
     if (this._source) {
       this._source.remove();
       delete this._source;
@@ -31,13 +29,13 @@ class Noodle extends Group {
 
     // If source item is a path, add it
     if (this._source.segments) {
-      Noodle.prepareCurves(this._source);
+      this._source.flatten();
       this._sourcePaths.push(this._source);
     }
 
     // Add all child paths
     for (let path of this._source.getItems({class: 'Path'})) {
-      Noodle.prepareCurves(path);
+      path.flatten();
       this._sourcePaths.push(path);
     }
 
@@ -66,40 +64,10 @@ class Noodle extends Group {
     if (this._path) this._path.remove();
 
     this._path = path;
+    this._path.selected = this.selected;
     this.addChild(path);
 
-    if (!this._sourcePaths) return;
-
-    this._sourcePaths.forEach(path => {
-      // Create new set of points based on original offsets and distances
-      if (!path._noodlePoints) return;
-
-      let outputPoints = [];
-
-      path._noodlePoints.forEach((noodlePoint, i) => {
-        let newPoint = noodlePoint.toPoint(this);
-        // Interpolate more points where needed
-        let prevPoint = outputPoints[outputPoints.length - 1];
-        if (prevPoint) {
-          let prevNoodlePoint = path._noodlePoints[i - 1];
-          let dist = noodlePoint.getDistance(prevNoodlePoint, this);
-          if (dist > this.resolution) {
-            let numSteps = dist / this.resolution;
-            for (let i = 1; i < numSteps; i++) {
-              let offset = i / numSteps;
-              let newSubNoodlePoint = NoodlePoint.interpolate(prevNoodlePoint, noodlePoint, offset, this)
-              let newSubPoint = newSubNoodlePoint.toPoint(this);
-              outputPoints.push(newSubPoint);
-            }
-          }
-        }
-
-        outputPoints.push(newPoint);
-      });
-
-      // Override source segments
-      path.segments = outputPoints;
-    });
+    this.update();
   }
 
   get path() {
@@ -135,8 +103,33 @@ class Noodle extends Group {
   }
 
   update() {
-    this.path = this.path;
-    this.path.selected = this.selected;
+    if (!this._sourcePaths) return;
+    this._sourcePaths.forEach(path => {
+      // Create new set of points based on original offsets and distances
+      if (!path._noodlePoints) return;
+
+      path.removeSegments();
+
+      path._noodlePoints.forEach((noodlePoint, i) => {
+        let newPoint = noodlePoint.toPoint(this);
+        // Interpolate more points where needed
+        if (path.lastSegment) {
+          let prevNoodlePoint = path._noodlePoints[i - 1];
+          let dist = noodlePoint.getDistance(prevNoodlePoint, this);
+          if (dist > this.resolution) {
+            let numSteps = dist / this.resolution;
+            for (let i = 1; i < numSteps; i++) {
+              let offset = i / numSteps;
+              let newSubNoodlePoint = NoodlePoint.interpolate(prevNoodlePoint, noodlePoint, offset, this)
+              let newSubPoint = newSubNoodlePoint.toPoint(this);
+              path.add(newSubPoint);
+            }
+          }
+        }
+
+        path.add(newPoint);
+      });
+    });
   }
 
   processSourcePoints() {
@@ -162,18 +155,6 @@ class Noodle extends Group {
           onLoad(_this);
       }
     });
-  }
-
-  static prepareCurves(path) {
-    for (let i = path.curves.length - 1; i >= 0; i--) {
-      let curve = path.curves[i];
-      if (!curve.isStraight()) {
-        let n = Math.floor(curve.length);
-        for (let i = n; i > 0; i--) {
-          curve.divideAt(i);
-        }
-      }
-    }
   }
 }
 

@@ -13,7 +13,6 @@ class Noodle extends Group {
   }
 
   set source(source) {
-
     if (this._source) {
       this._source.remove();
       delete this._source;
@@ -65,36 +64,10 @@ class Noodle extends Group {
     if (this._path) this._path.remove();
 
     this._path = path;
+    this._path.selected = this.selected;
     this.addChild(path);
 
-    if (!this._sourcePaths) return;
-
-    this._sourcePaths.forEach(path => {
-      // Create new set of points based on original offsets and distances
-      if (!path._noodlePoints) return;
-
-      path.removeSegments();
-
-      path._noodlePoints.forEach((noodlePoint, i) => {
-        let newPoint = noodlePoint.toPoint(this);
-        // Interpolate more points where needed
-        if (path.lastSegment) {
-          let prevNoodlePoint = path._noodlePoints[i - 1];
-          let dist = noodlePoint.getDistance(prevNoodlePoint, this);
-          if (dist > this.resolution) {
-            let numSteps = dist / this.resolution;
-            for (let i = 1; i < numSteps; i++) {
-              let offset = i / numSteps;
-              let newSubNoodlePoint = NoodlePoint.interpolate(prevNoodlePoint, noodlePoint, offset, this)
-              let newSubPoint = newSubNoodlePoint.toPoint(this);
-              path.add(newSubPoint);
-            }
-          }
-        }
-
-        path.add(newPoint);
-      });
-    });
+    this.update();
   }
 
   get path() {
@@ -130,8 +103,33 @@ class Noodle extends Group {
   }
 
   update() {
-    this.path = this.path;
-    this.path.selected = this.selected;
+    if (!this._sourcePaths) return;
+    this._sourcePaths.forEach(path => {
+      // Create new set of points based on original offsets and distances
+      if (!path._noodlePoints) return;
+
+      path.removeSegments();
+
+      path._noodlePoints.forEach((noodlePoint, i) => {
+        let newPoint = noodlePoint.toPoint(this);
+        // Interpolate more points where needed
+        if (path.lastSegment) {
+          let prevNoodlePoint = path._noodlePoints[i - 1];
+          let dist = noodlePoint.getDistance(prevNoodlePoint, this);
+          if (dist > this.resolution) {
+            let numSteps = dist / this.resolution;
+            for (let i = 1; i < numSteps; i++) {
+              let offset = i / numSteps;
+              let newSubNoodlePoint = NoodlePoint.interpolate(prevNoodlePoint, noodlePoint, offset, this)
+              let newSubPoint = newSubNoodlePoint.toPoint(this);
+              path.add(newSubPoint);
+            }
+          }
+        }
+
+        path.add(newPoint);
+      });
+    });
   }
 
   processSourcePoints() {
