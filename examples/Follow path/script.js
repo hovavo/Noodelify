@@ -1,7 +1,6 @@
 
 var population = 9;
 var speed = 2;
-var gap = 320;
 
 
 var p = new Path(`M647.4,306.5L647.4,306.5c-11.1,0-21,7.3-24.2,17.9c-12.7,41.3-43,75.1-82.2,92.7
@@ -18,6 +17,7 @@ var p = new Path(`M647.4,306.5L647.4,306.5c-11.1,0-21,7.3-24.2,17.9c-12.7,41.3-4
 p.position = view.center;
 
 
+var gap = p.length / population;
 var dudes = [];
 
 for (var i = 0; i < population; i++) {
