@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Noodlify</title>
+
+  <script src="http://localhost:8080/ffmpegserver/ffmpegserver.min.js"></script>
+  <script src="/node_modules/ccapture.js/build/CCapture.all.min.js"></script>
+
+  <script src="/node_modules/acorn/dist/acorn.js"></script>
+  <script src="/node_modules/paper/dist/paper-full.js"></script>
+  <script src="/src/NoodlePoint.js" type="text/paperscript" canvas="canvas"></script>
+  <script src="/src/Noodle.js" type="text/paperscript" canvas="canvas"></script>
+  <script src="script.js" type="text/paperscript" canvas="canvas"></script>
+
+  <link rel="stylesheet" href="../css/style.css">
+
+</head>
+<body>
+
+<canvas id="canvas" width="600" height="600"></canvas>
+
+<script>
+  var canvas = document.querySelector('#canvas');
+  var capturer;
+  var running;
+
+  function startHook() {
+    capturer = new CCapture({
+      format: 'ffmpegserver',
+      framerate: 30,
+      verbose: true,
+      name: "test",
+      extension: ".mp4",
+      codec: "mpeg4"
+    });
+    capturer.start();
+    running = true;
+  }
+
+  function renderHook(count) {
+    if (running)
+      capturer.capture(canvas);
+  }
+
+  function stopHook() {
+    if (!running) return;
+
+    running = false;
+    capturer.stop();
+    capturer.save();
+  }
+
+</script>
+
+</body>
+</html>

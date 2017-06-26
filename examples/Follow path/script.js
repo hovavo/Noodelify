@@ -1,6 +1,9 @@
+var bg = new Shape.Rectangle([0,0], view.size);
+bg.fillColor = 'white';
 
 var population = 9;
 var speed = 2;
+var frameCount = 0;
 
 
 var p = new Path(`M647.4,306.5L647.4,306.5c-11.1,0-21,7.3-24.2,17.9c-12.7,41.3-43,75.1-82.2,92.7
@@ -33,10 +36,20 @@ function register(noodle) {
 
 
 function onFrame(event) {
+  if (!dudes.length) return;
+
   dudes.forEach(function (noo, i) {
-    noo.path = getSubPath(p, (event.count * speed) + gap * i, noo.path.length);
+    noo.path = getSubPath(p, (frameCount * speed) + gap * i, noo.path.length);
     noo.update();
   });
+
+  if (window.stopHook && frameCount >= gap)
+    window.stopHook()
+
+  if (window.renderHook)
+    window.renderHook(frameCount);
+
+  frameCount ++;
 }
 
 
@@ -47,3 +60,6 @@ function getSubPath(path, start, length) {
   subPath.splitAt(length).remove();
   return subPath;
 }
+
+if (window.startHook)
+  window.startHook();
