@@ -13,12 +13,12 @@
   <script src="/src/Noodle.js" type="text/paperscript" canvas="canvas"></script>
   <script src="script.js" type="text/paperscript" canvas="canvas"></script>
 
-  <link rel="stylesheet" href="../css/style.css">
+  <link href="../css/style.css" rel="stylesheet">
 
 </head>
 <body>
 
-<canvas id="canvas" width="600" height="600"></canvas>
+<canvas id="canvas"width="430" height="640"></canvas>
 
 <script>
   var canvas = document.querySelector('#canvas');
@@ -32,7 +32,8 @@
       verbose: true,
       name: "test",
       extension: ".mp4",
-      codec: "mpeg4"
+      codec: "mpeg4",
+      ffmpegArguments: [ "-b:v", "10000k" ],
     });
     capturer.start();
     running = true;
